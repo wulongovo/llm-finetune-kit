@@ -1,0 +1,38 @@
+# Qwen3.5-Heretic LoRA 配置
+# 适用于 ollama 中的 qwen35-heretic 模型
+
+model:
+  name_or_path: "Qwen/Qwen3.5-7B"     # HuggingFace 模型ID
+  # 如果使用本地模型:
+  # name_or_path: "E:/models/qwen35-heretic"
+  trust_remote_code: true
+  torch_dtype: "bfloat16"
+
+lora:
+  r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  target_modules:
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+
+training:
+  output_dir: "./outputs/qwen35-heretic-lora"
+  num_train_epochs: 3
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 8
+  learning_rate: 2.0e-4
+  warmup_ratio: 0.05
+  max_seq_length: 1024
+  gradient_checkpointing: true
+  bf16: true
+  optim: "paged_adamw_8bit"
+
+data:
+  train_file: "./data/processed/train.jsonl"
+  format: "alpaca"
