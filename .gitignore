@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Virtual env
+venv/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+
+# Training outputs (large files)
+outputs/
+adapters/
+*.bin
+*.safetensors
+*.gguf
+
+# Data (keep raw samples only)
+data/processed/
+data/raw/*.jsonl
+
+# Logs
+wandb/
+*.log
+runs/
+
+# System
+Thumbs.db
+.DS_Store
