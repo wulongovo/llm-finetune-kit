@@ -1,0 +1,54 @@
+# LoRA Fine-tuning Configuration
+# Optimized for RTX 3070 (8GB VRAM)
+
+# ============ 模型配置 ============
+model:
+  name_or_path: "Qwen/Qwen2.5-7B"  # 基础模型，可替换为其他模型
+  trust_remote_code: true
+  torch_dtype: "bfloat16"
+  device_map: "auto"
+
+# ============ LoRA 配置 ============
+lora:
+  r: 16                      # LoRA rank，8GB显存建议8-16
+  lora_alpha: 32             # alpha = 2 * r 是常用设置
+  lora_dropout: 0.05
+  target_modules:            # Qwen系列模型的注意力层
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+  bias: "none"
+  task_type: "CAUSAL_LM"
+
+# ============ 训练配置 ============
+training:
+  output_dir: "./outputs"
+  num_train_epochs: 3
+  per_device_train_batch_size: 1       # 8GB显存必须为1
+  gradient_accumulation_steps: 8       # 等效 batch_size = 8
+  learning_rate: 2.0e-4
+  weight_decay: 0.01
+  warmup_ratio: 0.05
+  lr_scheduler_type: "cosine"
+  logging_steps: 10
+  save_steps: 100
+  save_total_limit: 3
+  gradient_checkpointing: true         # 节省显存关键！
+  fp16: false
+  bf16: true                           # RTX 3070 支持 bf16
+  max_grad_norm: 1.0
+  optim: "paged_adamw_8bit"            # 8bit优化器节省显存
+  max_seq_length: 1024                 # 序列长度，8GB显存建议512-1024
+  report_to: "none"                    # 改为 "wandb" 可启用训练监控
+  seed: 42
+
+# ============ 数据配置 ============
+data:
+  train_file: "./data/processed/train.jsonl"
+  eval_file: "./data/processed/eval.jsonl"
+  text_field: "text"
+  format: "alpaca"                     # alpaca / sharegpt / raw

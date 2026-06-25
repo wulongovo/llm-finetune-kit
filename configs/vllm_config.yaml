@@ -1,0 +1,17 @@
+# vLLM 部署配置
+
+model:
+  path: "outputs/merged_model"
+  tensor_parallel_size: 1
+  gpu_memory_utilization: 0.9
+  max_model_len: 4096
+  dtype: "bfloat16"
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+
+sampling:
+  temperature: 0.7
+  top_p: 0.9
+  max_tokens: 512

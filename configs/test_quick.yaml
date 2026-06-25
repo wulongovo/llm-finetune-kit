@@ -1,0 +1,41 @@
+# 快速测试配置 - Qwen2.5-1.5B
+# 用于验证训练流程，约5-10分钟完成
+
+model:
+  name_or_path: "Qwen/Qwen2.5-1.5B"
+  trust_remote_code: true
+  torch_dtype: "bfloat16"
+
+lora:
+  r: 8
+  lora_alpha: 16
+  lora_dropout: 0.05
+  target_modules:
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+
+training:
+  output_dir: "./outputs/test-run"
+  num_train_epochs: 3
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 4
+  learning_rate: 2.0e-4
+  warmup_ratio: 0.1
+  max_seq_length: 512
+  gradient_checkpointing: true
+  bf16: true
+  optim: "paged_adamw_8bit"
+  logging_steps: 5
+  save_steps: 50
+  save_total_limit: 2
+  report_to: "none"
+  seed: 42
+
+data:
+  train_file: "./data/processed/train.jsonl"
+  format: "alpaca"
