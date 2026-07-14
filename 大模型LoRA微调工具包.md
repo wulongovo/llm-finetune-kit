@@ -379,6 +379,95 @@ docker logs -f llm-server
 | CUDA | 12.4 |
 | vLLM | 0.6.x |
 
+## 🔮 多模态 VLM 微调（新增）
+
+支持 **Qwen2.5-VL** 和 **InternVL** 双架构，提供 **QLoRA / LoRA / Full** 三种微调策略。
+
+### 支持的模型架构
+
+| 架构 | 推荐模型 | 说明 |
+|------|---------|------|
+| Qwen2.5-VL | Qwen/Qwen2.5-VL-7B-Instruct | 阿里通义千问视觉语言模型 |
+| InternVL | OpenGVLab/InternVL3-8B | 上海AI Lab 视觉语言模型 |
+
+### 三种微调策略对比
+
+| 策略 | 显存需求 | 精度 | 适用场景 |
+|------|---------|------|---------|
+| QLoRA | 8-12GB | 4bit NF4 | 消费级GPU，快速实验 |
+| LoRA | 16-24GB | bf16 | 追求更好效果 |
+| Full | 40GB+ | bf16 | 追求最佳效果，需A100 |
+
+### 多模态快速开始
+
+```bash
+# Qwen2.5-VL QLoRA 微调（8GB显存可用）
+python train_vlm.py --config configs/qwen25_vl_qlora.yaml
+
+# InternVL3 LoRA 微调
+python train_vlm.py --config configs/internvl35_lora.yaml
+
+# 指定策略和模型
+python train_vlm.py --model Qwen/Qwen2.5-VL-7B-Instruct --strategy qlora --epochs 3
+
+# DeepSpeed 多卡训练
+python train_vlm.py --config configs/qwen25_vl_lora.yaml --deepspeed configs/deepspeed_zero2.json
+```
+
+### VLM 评估
+
+```bash
+# VQA 准确率评估
+python eval_vlm.py --model outputs/qwen25_vl_lora/final_adapter --task vqa
+
+# 对比两个模型
+python eval_vlm.py --model-a outputs/qwen25_vl_lora/final_adapter --model-b Qwen/Qwen2.5-VL-7B-Instruct --task vqa
+
+# 推理速度 Benchmark
+python eval_vlm.py --model Qwen/Qwen2.5-VL-7B-Instruct --benchmark
+```
+
+### 多模态显存估算
+
+| 模型 | QLoRA | LoRA | Full |
+|------|-------|------|------|
+| Qwen2.5-VL-3B | ~4GB | ~8GB | ~14GB |
+| Qwen2.5-VL-7B | ~8GB | ~16GB | ~30GB |
+| InternVL3-2B | ~3GB | ~6GB | ~10GB |
+| InternVL3-8B | ~8GB | ~16GB | ~30GB |
+
+### 多模态数据格式
+
+支持 VQA / 图像描述 / 多轮对话 三种格式（JSONL）：
+
+```jsonl
+{"image": "images/001.jpg", "question": "图中有什么？", "answer": "一只猫。"}
+{"image": "images/002.jpg", "caption": "日落的城市天际线。"}
+{"image": "images/003.jpg", "conversations": [{"role": "user", "content": "<image>\n描述图片"}, {"role": "assistant", "content": "这是一幅风景照。"}]}
+```
+
+### 多模态项目结构
+
+```
+src/multimodal/
+├── __init__.py          # 模块入口
+├── model_factory.py     # 模型工厂（统一加载Qwen2-VL/InternVL）
+├── data_processor.py    # 多模态数据处理
+├── vlm_trainer.py       # VLM训练核心
+└── evaluator.py         # 评估基准（VQA/Caption/OCR/速度）
+
+configs/
+├── qwen25_vl_lora.yaml     # Qwen2.5-VL LoRA
+├── qwen25_vl_qlora.yaml    # Qwen2.5-VL QLoRA
+├── internvl35_lora.yaml    # InternVL3 LoRA
+├── internvl35_qlora.yaml   # InternVL3 QLoRA
+└── vlm_full_finetune.yaml  # 全量微调
+
+train_vlm.py             # VLM训练入口
+eval_vlm.py              # VLM评估入口
+data/multimodal/         # 多模态数据目录
+```
+
 ## 📄 License
 
 MIT License

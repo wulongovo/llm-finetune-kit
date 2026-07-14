@@ -1,0 +1,10 @@
+{"image": "images/sample_001.jpg", "question": "这张图片中有几种动物？分别是什么？", "answer": "图片中有两种动物：一只橘色的猫和一只白色的狗，它们正在草地上玩耍。"}
+{"image": "images/sample_002.jpg", "conversations": [{"role": "user", "content": "<image>\n请详细描述这张图片的内容。"}, {"role": "assistant", "content": "这是一幅日落时分的城市天际线照片。画面中可以看到多座摩天大楼的轮廓，天空呈现出橙红色和紫色的渐变，云层被夕阳染成了金色。前景是一条河流，水面反射着天空的色彩。"}]}
+{"image": "images/sample_003.jpg", "question": "图片中的文字是什么？", "answer": "图片中的文字是 'Hello World'，使用蓝色粗体字显示在白色背景上。"}
+{"image": "images/sample_004.jpg", "conversations": [{"role": "user", "content": "<image>\n这张图表展示了什么趋势？"}, {"role": "assistant", "content": "这张折线图展示了2020年至2024年AI模型参数量的增长趋势。可以看到从2020年的约1亿参数增长到2024年的超过1万亿参数，呈现指数级增长。2022年是一个明显的拐点，对应GPT-3.5和ChatGPT的发布。"}]}
+{"image": "images/sample_005.jpg", "question": "这张图片属于什么场景类别？", "answer": "这是一张厨房场景的照片。可以看到不锈钢水槽、木质橱柜、花岗岩台面，台面上放着一个咖啡机和一些水果。"}
+{"image": "images/sample_006.jpg", "conversations": [{"role": "user", "content": "<image>\n图中有哪些品牌标志？"}, {"role": "assistant", "content": "图中可以识别出3个品牌标志：左上角的苹果（Apple）logo，右上角的谷歌（Google）logo，以及下方的微软（Microsoft）logo。"}]}
+{"image": "images/sample_007.jpg", "question": "数一数图中有多少个人？他们在做什么？", "answer": "图中共有5个人。其中2个人在打篮球，1个人在旁边观看，另外2个人坐在长椅上休息。场景看起来是一个户外篮球场。"}
+{"image": "images/sample_008.jpg", "conversations": [{"role": "user", "content": "<image>\n这张图片的拍摄时间大约是几点？依据是什么？"}, {"role": "assistant", "content": "拍摄时间大约是下午5-6点。依据：1）阳光角度较低，形成长长的影子；2）天空呈现暖色调的橙黄色，符合日落前的光线特征；3）建筑物的西面被阳光照亮。"}]}
+{"image": "images/sample_009.jpg", "question": "这张图片中有哪些交通标志？", "answer": "图片中可以看到3个交通标志：一个限速60公里/小时的标志，一个禁止左转的标志，以及一个人行横道的指示标志。"}
+{"image": "images/sample_010.jpg", "conversations": [{"role": "user", "content": "<image>\n根据图片内容，判断这是什么地方？有什么特点？"}, {"role": "assistant", "content": "这是一个图书馆的阅览区。特点：1）高大的木质书架排列整齐；2）阅览桌上配有台灯；3）地面铺设了深色地毯以降低噪音；4）天花板较高，采光良好，有大面积的窗户。"}]}

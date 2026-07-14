@@ -1,0 +1,46 @@
+# VLM 全量微调配置
+# 冻结 Vision Encoder，只训练 LLM 部分
+# 适用于 40GB+ 显存 (A100/A6000)
+
+model:
+  name_or_path: Qwen/Qwen2.5-VL-7B-Instruct
+  trust_remote_code: true
+  torch_dtype: bfloat16
+
+# 全量微调不使用 LoRA
+lora: null
+
+# 全量微调不需要量化
+quantization: null
+
+training:
+  num_train_epochs: 3
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 16
+  learning_rate: 5.0e-5       # 全量微调用更小的学习率
+  weight_decay: 0.01
+  warmup_ratio: 0.03
+  lr_scheduler_type: cosine
+  max_seq_length: 2048
+  gradient_checkpointing: true
+  bf16: true
+  fp16: false
+  max_grad_norm: 1.0
+  optim: adamw_torch
+  output_dir: outputs/vlm_full_finetune
+  logging_steps: 10
+  save_steps: 200
+  save_total_limit: 2
+  seed: 42
+  report_to: none
+
+data:
+  train_file: data/multimodal/train.jsonl
+  eval_file: data/multimodal/eval.jsonl
+  image_dir: data/multimodal/images
+  format: auto
+
+# 全量微调特殊设置
+full_finetune:
+  freeze_vision_encoder: true   # 冻结视觉编码器
+  unfreeze_lm_head: true        # 解冻 LM head
