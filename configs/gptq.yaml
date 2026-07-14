@@ -1,0 +1,29 @@
+# GPTQ 量化配置
+# 将合并后的完整模型压缩为 4/8bit 格式，用于高效部署
+
+# ============ 量化参数 ============
+quantization:
+  bits: 4                        # 量化位数: 2/3/4/8 (推荐4)
+  group_size: 128                # 分组大小: 32/64/128/256/512 (越小精度越高，越大压缩率越高)
+  sym: true                      # 对称量化 (推荐true，更快)
+  true_sequential: true          # 逐层顺序量化 (推荐true，精度更高)
+  damp_percent: 0.01             # 阻尼系数 (默认0.01)
+  desc_act: true                 # 按激活值降序排列 (推荐true)
+
+# ============ 校准数据 ============
+calibration:
+  max_samples: 128               # 校准样本数量 (越多越准，512是上限)
+  max_tokens: 2048               # 每个样本最大token数
+  data_file: null                # 校准数据JSONL路径，为null时使用内置通用文本
+  # data_file: "data/processed/eval.jsonl"
+
+# ============ 模型路径 ============
+model:
+  input_path: "models/merged-7b"              # 待量化的模型路径（合并LoRA后的完整模型）
+  output_path: "models/merged-7b-gptq-int4"   # 量化后模型保存路径
+
+# ============ 推理测试 ============
+test:
+  enabled: true                  # 量化后自动测试
+  prompt: "请用一句话介绍一下你自己。"
+  device: "cuda:0"

@@ -20,6 +20,7 @@
 - 🔌 **多模型支持** — Qwen、DeepSeek、LLaMA、Mistral 等主流模型
 - 📊 **Web UI** — Gradio 可视化界面，配置/训练/测试一条龙
 - 📦 **一键部署** — 训练完成后直接导出到 Ollama 本地运行
+- 📊 **GPTQ 量化** — 训练后 4/8bit 量化，模型体积缩至 1/4，推理加速
 - 🔄 **SFT + DPO** — 同时支持监督微调和偏好优化两种训练方式
 - 🚀 **DeepSpeed 多卡训练** — 支持 ZeRO-2/ZeRO-3 分布式训练
 - ⚡ **vLLM 高性能部署** — 推理速度提升 5-10 倍
@@ -119,10 +120,15 @@ llm-finetune-kit/
 │   ├── trainer.py        # 训练核心（SFT/DPO）
 │   ├── inference.py      # 推理引擎
 │   ├── export.py         # 模型导出（Ollama/GGUF）
+│   ├── quantize.py       # GPTQ 训练后量化
+│   ├── serving.py        # vLLM 推理服务
+│   ├── benchmark.py      # 推理性能对比
 │   └── webui.py          # Gradio Web UI
 ├── configs/
 │   ├── lora_config.yaml  # 通用LoRA配置
 │   ├── qwen35_heretic.yaml  # Qwen3.5-Heretic配置
+│   ├── gptq.yaml         # GPTQ 量化配置
+│   ├── vllm_config.yaml  # vLLM 部署配置
 │   └── ds_config_zero2.json  # DeepSpeed ZeRO-2配置
 ├── data/
 │   ├── raw/              # 原始数据
@@ -133,6 +139,7 @@ llm-finetune-kit/
 │   ├── launch_webui.bat  # 启动Web UI
 │   └── train_multi_gpu.sh  # 多卡训练启动脚本
 ├── merge_lora.py         # LoRA合并脚本（vLLM部署用）
+├── quantize.py           # GPTQ 量化入口
 ├── serve_vllm.py         # vLLM推理服务
 ├── Dockerfile.vllm       # vLLM Docker部署
 ├── outputs/              # 训练输出
@@ -201,7 +208,11 @@ SFT 训练 (3-5 epochs)
     ↓
 保存 LoRA 适配器
     ↓
-合并模型 → 导出 Ollama
+合并模型
+    ↓
+[可选] GPTQ 量化 (4bit/8bit)
+    ↓
+导出 Ollama / vLLM 部署
 ```
 
 ## 💡 最佳实践
@@ -275,11 +286,70 @@ accelerate launch --num_processes 2 --deepspeed_config_file configs/ds_config_ze
 | 训练速度慢 | 检查 `overlap_comm` 是否开启，确认 NVLink 连接 |
 | 权重不同步 | 确保所有卡使用相同随机种子 `--seed 42` |
 
+## 📦 GPTQ 量化
+
+训练后量化：将合并后的完整模型压缩为 4/8bit，体积缩至 1/4，推理速度翻倍。
+
+### 快速使用
+
+```bash
+# 使用配置文件量化
+python quantize.py --config configs/gptq.yaml
+
+# 直接指定路径
+python quantize.py --model models/merged-7b --output models/merged-7b-gptq-int4
+
+# 使用领域校准数据获得最佳精度
+python quantize.py --model models/merged-7b --output models/merged-7b-gptq-int4 --calibration data/eval.jsonl
+
+# 8bit 量化（精度更高，体积缩减一半）
+python quantize.py --model models/merged-7b --output models/merged-7b-gptq-int8 --bits 8
+```
+
+### 测试量化模型
+
+```bash
+# 推理测试
+python quantize.py --test --model models/merged-7b-gptq-int4
+
+# 自定义测试提示词
+python quantize.py --test --model models/merged-7b-gptq-int4 --test-prompt "请总结一下Transformer架构的核心创新点"
+```
+
+### GPTQ vs BitsAndBytes
+
+| 特性 | BitsAndBytes (训练时) | GPTQ (训练后) |
+|------|----------------------|--------------|
+| 使用阶段 | 训练时加载模型 | 部署前压缩模型 |
+| 量化方式 | 在线量化（每次加载） | 离线量化（一次压缩） |
+| 推理速度 | 较慢（动态反量化） | 快（预量化权重） |
+| 显存占用 | 较低 | 更低 |
+| 模型文件 | 原始大小 | ~1/4 大小 |
+| 适用场景 | 训练（8GB显存微调7B） | 部署（推理加速+节省存储） |
+
+### 量化参数说明
+
+| 参数 | 推荐值 | 说明 |
+|------|--------|------|
+| bits | 4 | 量化位数，4bit 性价比最高 |
+| group_size | 128 | 分组大小，越小精度越高但文件越大 |
+| sym | true | 对称量化，INT4 推荐开启 |
+| desc_act | true | 按激活值排序，显著提升精度 |
+| max_calib_samples | 128 | 校准样本数，越多越准 |
+
+### 完整链路
+
+```
+训练完成 → 合并LoRA → GPTQ 量化 → vLLM 部署
+   ↓           ↓           ↓            ↓
+train.py  merge_lora.py  quantize.py  serve_vllm.py
+```
+
 ## ⚡ vLLM 部署
 
 ### LoRA 合并
 
-部署前需将 LoRA 适配器合并到基础模型：
+部署前需将 LoRA 适配器合并到基础模型，可选再执行 GPTQ 量化：
 
 ```bash
 # 合并 LoRA 到基础模型
@@ -288,6 +358,9 @@ python merge_lora.py \
   --adapter outputs/final_adapter \
   --output-path models/merged-7b
 
+# [可选] GPTQ 量化 — 推荐部署前执行
+python quantize.py --model models/merged-7b --output models/merged-7b-gptq-int4
+
 # 验证合并结果
 python inference.py --model-path models/merged-7b --instruction "测试合并模型"
 ```
@@ -295,12 +368,12 @@ python inference.py --model-path models/merged-7b --instruction "测试合并模
 ### 启动推理服务
 
 ```bash
-# 基础启动
-python serve_vllm.py --model models/merged-7b
+# 基础启动（使用 GPTQ 量化模型）
+python serve_vllm.py --model models/merged-7b-gptq-int4
 
 # 自定义参数
 python serve_vllm.py \
-  --model models/merged-7b \
+  --model models/merged-7b-gptq-int4 \
   --tensor-parallel-size 1 \
   --max-model-len 4096 \
   --gpu-memory-utilization 0.9 \
